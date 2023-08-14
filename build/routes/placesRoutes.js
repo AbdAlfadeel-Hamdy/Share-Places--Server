@@ -1,37 +1,31 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const faker_1 = require("@faker-js/faker");
-const httpError_1 = __importDefault(require("../models/httpError"));
-const DUMMMY_PLACES = [
-    {
-        id: "p1",
-        creator: "u1",
-        description: faker_1.faker.lorem.sentence(),
-        location: {
-            lat: faker_1.faker.location.latitude(),
-            lng: faker_1.faker.location.longitude(),
-        },
-        title: faker_1.faker.word.noun(),
-        address: faker_1.faker.location.secondaryAddress(),
-    },
-];
+const placesController = __importStar(require("../controllers/placesController"));
 const router = (0, express_1.Router)();
-router.get("/:placeId", (req, res, next) => {
-    const { placeId } = req.params;
-    const place = DUMMMY_PLACES.find((place) => place.id === placeId);
-    if (!place)
-        return next(new httpError_1.default("Could not find a place for the provided ID.", 404));
-    res.json({ place });
-});
-router.get("/user/:userId", (req, res, next) => {
-    const { userId } = req.params;
-    const places = DUMMMY_PLACES.filter((place) => place.creator === userId);
-    if (!places.length)
-        return next(new httpError_1.default("Could not find any places for the provided user ID.", 404));
-    res.json({ places });
-});
+router.get("/:placeId", placesController.getPlaceById);
+router.get("/user/:userId", placesController.getPlaceByUserId);
 exports.default = router;
