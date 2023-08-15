@@ -4,6 +4,7 @@ import { v5 as uuidv5 } from "uuid";
 import { validationResult } from "express-validator/src/validation-result";
 
 import HttpError from "../models/httpError";
+import { getCordsForAddress } from "../utils/location";
 
 interface Place {
   id: string;
@@ -51,14 +52,24 @@ export const getPlacesByUserId: Handler = (req, res, next) => {
   res.json({ places });
 };
 
-export const createPlace: Handler = (req, res, next) => {
+export const createPlace: Handler = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty())
     return next(
       new HttpError("Invalid inputs passed, please check your data.", 422)
     );
 
-  const { title, address, description, creator, coordinates } = req.body;
+  const { title, address, description, creator } = req.body;
+  let coordinates;
+  try {
+    const data: any = await getCordsForAddress(address);
+    coordinates = {
+      lat: +data.latt,
+      lng: +data.longt,
+    };
+  } catch (err) {
+    return next(err);
+  }
 
   const createdPlace = {
     id: uuidv5("https://www.w3.org/", uuidv5.URL),
@@ -98,9 +109,12 @@ export const updatePlace: Handler = (req, res, next) => {
 
 export const deletePlace: Handler = (req, res, next) => {
   const { placeId } = req.params;
-  const placeIndex = DUMMMY_PLACES.findIndex((place) => place.id === placeId);
+  const place = DUMMMY_PLACES.find((place) => place.id === placeId);
+  if (!place)
+    return next(new HttpError("Could not find a place for that ID.", 404));
 
+  const placeIndex = DUMMMY_PLACES.findIndex((place) => place.id === placeId);
   DUMMMY_PLACES.splice(placeIndex, 1);
 
-  res.status(200).json({ message: "Deleted Successfully." });
+  res.status(200).json({ message: "Deleted place successfully." });
 };

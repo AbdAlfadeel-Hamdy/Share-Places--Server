@@ -8,6 +8,7 @@ const faker_1 = require("@faker-js/faker");
 const uuid_1 = require("uuid");
 const validation_result_1 = require("express-validator/src/validation-result");
 const httpError_1 = __importDefault(require("../models/httpError"));
+const location_1 = require("../utils/location");
 const DUMMMY_PLACES = [
     {
         id: "p1",
@@ -37,11 +38,22 @@ const getPlacesByUserId = (req, res, next) => {
     res.json({ places });
 };
 exports.getPlacesByUserId = getPlacesByUserId;
-const createPlace = (req, res, next) => {
+const createPlace = async (req, res, next) => {
     const errors = (0, validation_result_1.validationResult)(req);
     if (!errors.isEmpty())
         return next(new httpError_1.default("Invalid inputs passed, please check your data.", 422));
-    const { title, address, description, creator, coordinates } = req.body;
+    const { title, address, description, creator } = req.body;
+    let coordinates;
+    try {
+        const data = await (0, location_1.getCordsForAddress)(address);
+        coordinates = {
+            lat: +data.latt,
+            lng: +data.longt,
+        };
+    }
+    catch (err) {
+        return next(err);
+    }
     const createdPlace = {
         id: (0, uuid_1.v5)("https://www.w3.org/", uuid_1.v5.URL),
         title,
@@ -73,8 +85,11 @@ const updatePlace = (req, res, next) => {
 exports.updatePlace = updatePlace;
 const deletePlace = (req, res, next) => {
     const { placeId } = req.params;
+    const place = DUMMMY_PLACES.find((place) => place.id === placeId);
+    if (!place)
+        return next(new httpError_1.default("Could not find a place for that ID.", 404));
     const placeIndex = DUMMMY_PLACES.findIndex((place) => place.id === placeId);
     DUMMMY_PLACES.splice(placeIndex, 1);
-    res.status(200).json({ message: "Deleted Successfully." });
+    res.status(200).json({ message: "Deleted place successfully." });
 };
 exports.deletePlace = deletePlace;
