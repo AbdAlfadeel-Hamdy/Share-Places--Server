@@ -25,17 +25,16 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const express_validator_1 = require("express-validator");
-const placesController = __importStar(require("../controllers/placesController"));
+const usersController = __importStar(require("../controllers/usersController"));
 const router = (0, express_1.Router)();
-router
-    .route("/:placeId")
-    .get(placesController.getPlaceById)
-    .patch([(0, express_validator_1.check)("title").not().isEmpty(), (0, express_validator_1.check)("description").isLength({ min: 5 })], placesController.updatePlace)
-    .delete(placesController.deletePlace);
-router.get("/user/:userId", placesController.getPlacesByUserId);
-router.post("/", [
-    (0, express_validator_1.check)("title").not().isEmpty(),
-    (0, express_validator_1.check)("description").isLength({ min: 5 }),
-    (0, express_validator_1.check)("address").not().isEmpty(),
-], placesController.createPlace);
+router.get("/", usersController.getAllUsers);
+router.post("/signup", [
+    (0, express_validator_1.check)("name").not().isEmpty(),
+    (0, express_validator_1.check)("email").normalizeEmail().isEmail(),
+    (0, express_validator_1.check)("password").isLength({ min: 6 }),
+], usersController.signup);
+router.post("/login", [
+    (0, express_validator_1.check)("email").normalizeEmail().isEmail(),
+    (0, express_validator_1.check)("password").isLength({ min: 6 }),
+], usersController.login);
 exports.default = router;
