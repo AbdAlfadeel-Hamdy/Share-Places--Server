@@ -1,10 +1,10 @@
 import { Handler } from "express";
-import { faker } from "@faker-js/faker";
-import { v5 as uuidv5 } from "uuid";
 import { validationResult } from "express-validator/src/validation-result";
+import { Types } from "mongoose";
 
 import HttpError from "../models/httpError";
 import { getCordsForAddress } from "../utils/location";
+import Place from "../models/placeModel";
 
 interface Place {
   id: string;
@@ -18,38 +18,48 @@ interface Place {
   address: string;
 }
 
-const DUMMMY_PLACES: Place[] = [
-  {
-    id: "p1",
-    creator: "u1",
-    description: faker.lorem.sentence(),
-    location: {
-      lat: faker.location.latitude(),
-      lng: faker.location.longitude(),
-    },
-    title: faker.word.noun(),
-    address: faker.location.secondaryAddress(),
-  },
-];
+const DUMMMY_PLACES: Place[] = [];
 
-export const getPlaceById: Handler = (req, res, next) => {
+export const getPlaceById: Handler = async (req, res, next) => {
   const { placeId } = req.params;
-  const place = DUMMMY_PLACES.find((place) => place.id === placeId);
+
+  let place;
+  try {
+    place = await Place.findById(placeId);
+  } catch (err) {
+    return next(
+      new HttpError("Something went wrong, could not find a place.", 500)
+    );
+  }
+
   if (!place)
     return next(
       new HttpError("Could not find a place for the provided ID.", 404)
     );
-  res.json({ place });
+
+  res.json({ place: place.toObject({ getters: true }) });
 };
 
-export const getPlacesByUserId: Handler = (req, res, next) => {
+export const getPlacesByUserId: Handler = async (req, res, next) => {
   const { userId } = req.params;
-  const places = DUMMMY_PLACES.filter((place) => place.creator === userId);
+
+  let places;
+  try {
+    places = await Place.find({ creator: userId });
+  } catch (err) {
+    return next(
+      new HttpError("Fetching places failed, please try again later.", 500)
+    );
+  }
+
   if (!places.length)
     return next(
       new HttpError("Could not find any places for the provided user ID.", 404)
     );
-  res.json({ places });
+
+  res.json({
+    places: places.map((place) => place.toObject({ getters: true })),
+  });
 };
 
 export const createPlace: Handler = async (req, res, next) => {
@@ -59,7 +69,7 @@ export const createPlace: Handler = async (req, res, next) => {
       new HttpError("Invalid inputs passed, please check your data.", 422)
     );
 
-  const { title, address, description, creator } = req.body;
+  const { title, description, address, creator } = req.body;
   let coordinates;
   try {
     const data: any = await getCordsForAddress(address);
@@ -71,14 +81,22 @@ export const createPlace: Handler = async (req, res, next) => {
     return next(err);
   }
 
-  const createdPlace = {
-    id: uuidv5("https://www.w3.org/", uuidv5.URL),
+  const createdPlace = new Place({
     title,
-    address,
     description,
-    creator,
+    image: "DummyURL",
+    address,
     location: coordinates,
-  };
+    creator,
+  });
+
+  try {
+    await createdPlace.save();
+  } catch (err) {
+    return next(
+      new HttpError("Creating place failed, please try again later.", 500)
+    );
+  }
 
   res.status(201).json({ place: createdPlace });
 };

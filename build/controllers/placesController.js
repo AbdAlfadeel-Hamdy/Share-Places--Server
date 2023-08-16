@@ -4,45 +4,46 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deletePlace = exports.updatePlace = exports.createPlace = exports.getPlacesByUserId = exports.getPlaceById = void 0;
-const faker_1 = require("@faker-js/faker");
-const uuid_1 = require("uuid");
 const validation_result_1 = require("express-validator/src/validation-result");
 const httpError_1 = __importDefault(require("../models/httpError"));
 const location_1 = require("../utils/location");
-const DUMMMY_PLACES = [
-    {
-        id: "p1",
-        creator: "u1",
-        description: faker_1.faker.lorem.sentence(),
-        location: {
-            lat: faker_1.faker.location.latitude(),
-            lng: faker_1.faker.location.longitude(),
-        },
-        title: faker_1.faker.word.noun(),
-        address: faker_1.faker.location.secondaryAddress(),
-    },
-];
-const getPlaceById = (req, res, next) => {
+const placeModel_1 = __importDefault(require("../models/placeModel"));
+const DUMMMY_PLACES = [];
+const getPlaceById = async (req, res, next) => {
     const { placeId } = req.params;
-    const place = DUMMMY_PLACES.find((place) => place.id === placeId);
+    let place;
+    try {
+        place = await placeModel_1.default.findById(placeId);
+    }
+    catch (err) {
+        return next(new httpError_1.default("Something went wrong, could not find a place.", 500));
+    }
     if (!place)
         return next(new httpError_1.default("Could not find a place for the provided ID.", 404));
-    res.json({ place });
+    res.json({ place: place.toObject({ getters: true }) });
 };
 exports.getPlaceById = getPlaceById;
-const getPlacesByUserId = (req, res, next) => {
+const getPlacesByUserId = async (req, res, next) => {
     const { userId } = req.params;
-    const places = DUMMMY_PLACES.filter((place) => place.creator === userId);
+    let places;
+    try {
+        places = await placeModel_1.default.find({ creator: userId });
+    }
+    catch (err) {
+        return next(new httpError_1.default("Fetching places failed, please try again later.", 500));
+    }
     if (!places.length)
         return next(new httpError_1.default("Could not find any places for the provided user ID.", 404));
-    res.json({ places });
+    res.json({
+        places: places.map((place) => place.toObject({ getters: true })),
+    });
 };
 exports.getPlacesByUserId = getPlacesByUserId;
 const createPlace = async (req, res, next) => {
     const errors = (0, validation_result_1.validationResult)(req);
     if (!errors.isEmpty())
         return next(new httpError_1.default("Invalid inputs passed, please check your data.", 422));
-    const { title, address, description, creator } = req.body;
+    const { title, description, address, creator } = req.body;
     let coordinates;
     try {
         const data = await (0, location_1.getCordsForAddress)(address);
@@ -54,14 +55,20 @@ const createPlace = async (req, res, next) => {
     catch (err) {
         return next(err);
     }
-    const createdPlace = {
-        id: (0, uuid_1.v5)("https://www.w3.org/", uuid_1.v5.URL),
+    const createdPlace = new placeModel_1.default({
         title,
-        address,
         description,
-        creator,
+        image: "DummyURL",
+        address,
         location: coordinates,
-    };
+        creator,
+    });
+    try {
+        await createdPlace.save();
+    }
+    catch (err) {
+        return next(new httpError_1.default("Creating place failed, please try again later.", 500));
+    }
     res.status(201).json({ place: createdPlace });
 };
 exports.createPlace = createPlace;
