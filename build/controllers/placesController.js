@@ -8,7 +8,6 @@ const validation_result_1 = require("express-validator/src/validation-result");
 const httpError_1 = __importDefault(require("../models/httpError"));
 const location_1 = require("../utils/location");
 const placeModel_1 = __importDefault(require("../models/placeModel"));
-const DUMMMY_PLACES = [];
 const getPlaceById = async (req, res, next) => {
     const { placeId } = req.params;
     let place;
@@ -72,31 +71,41 @@ const createPlace = async (req, res, next) => {
     res.status(201).json({ place: createdPlace });
 };
 exports.createPlace = createPlace;
-const updatePlace = (req, res, next) => {
+const updatePlace = async (req, res, next) => {
     const errors = (0, validation_result_1.validationResult)(req);
     if (!errors.isEmpty())
         return next(new httpError_1.default("Invalid inputs passed, please check your data.", 422));
     const { title, description } = req.body;
     const { placeId } = req.params;
-    const updatedPlace = {
-        ...DUMMMY_PLACES.find((place) => place.id === placeId),
-    };
-    const placeIndex = DUMMMY_PLACES.findIndex((place) => place.id === placeId);
-    if (updatedPlace) {
-        updatedPlace.title = title;
-        updatedPlace.description = description;
-        DUMMMY_PLACES[placeIndex] = updatedPlace;
+    let updatedPlace;
+    try {
+        updatedPlace = await placeModel_1.default.findByIdAndUpdate(placeId, {
+            title,
+            description,
+        }, {
+            new: true,
+            runValidators: true,
+        });
     }
-    res.status(200).json({ place: updatedPlace });
+    catch (err) {
+        return next(new httpError_1.default("Something went wrong, could not update place.", 500));
+    }
+    if (!updatedPlace)
+        return next(new httpError_1.default("Could not find a place for that ID.", 404));
+    res.status(200).json({ place: updatedPlace.toObject({ getters: true }) });
 };
 exports.updatePlace = updatePlace;
-const deletePlace = (req, res, next) => {
+const deletePlace = async (req, res, next) => {
     const { placeId } = req.params;
-    const place = DUMMMY_PLACES.find((place) => place.id === placeId);
+    let place;
+    try {
+        place = await placeModel_1.default.findByIdAndDelete(placeId);
+    }
+    catch (err) {
+        return next(new httpError_1.default("Something went wrong, could not delete the place.", 500));
+    }
     if (!place)
         return next(new httpError_1.default("Could not find a place for that ID.", 404));
-    const placeIndex = DUMMMY_PLACES.findIndex((place) => place.id === placeId);
-    DUMMMY_PLACES.splice(placeIndex, 1);
-    res.status(200).json({ message: "Deleted place successfully." });
+    res.status(200).json({ message: "Deleted the place successfully." });
 };
 exports.deletePlace = deletePlace;
