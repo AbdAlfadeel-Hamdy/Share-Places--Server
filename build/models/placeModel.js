@@ -29,8 +29,9 @@ const placeSchema = new mongoose_1.Schema({
         },
     },
     creator: {
-        type: String,
+        type: mongoose_1.Types.ObjectId,
         required: true,
+        ref: "User",
     },
 });
 exports.default = (0, mongoose_1.model)("Place", placeSchema);

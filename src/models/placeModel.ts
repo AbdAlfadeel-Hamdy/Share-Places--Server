@@ -1,4 +1,4 @@
-import { Schema, model } from "mongoose";
+import { Schema, model, Types } from "mongoose";
 
 const placeSchema = new Schema({
   title: {
@@ -28,8 +28,9 @@ const placeSchema = new Schema({
     },
   },
   creator: {
-    type: String,
+    type: Types.ObjectId,
     required: true,
+    ref: "User",
   },
 });
 

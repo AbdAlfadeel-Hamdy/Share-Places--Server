@@ -4,49 +4,65 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.login = exports.signup = exports.getAllUsers = void 0;
-const uuid_1 = require("uuid");
 const httpError_1 = __importDefault(require("../models/httpError"));
 const validation_result_1 = require("express-validator/src/validation-result");
-const DUMMY_USERS = [
-    {
-        id: "u1",
-        name: "Gonz",
-        email: "test@test.com",
-        password: "test1234",
-    },
-];
-const getAllUsers = (req, res, next) => {
-    const users = DUMMY_USERS;
-    res.status(200).json({
-        users,
+const userModel_1 = __importDefault(require("../models/userModel"));
+const getAllUsers = async (req, res, next) => {
+    let users;
+    try {
+        users = await userModel_1.default.find().select("-password");
+    }
+    catch (err) {
+        return next(new httpError_1.default("Fetching users failed, please try again later.", 500));
+    }
+    res.json({
+        users: users.map((user) => user.toObject({ getters: true })),
     });
 };
 exports.getAllUsers = getAllUsers;
-const signup = (req, res, next) => {
+const signup = async (req, res, next) => {
     const errors = (0, validation_result_1.validationResult)(req);
     if (!errors.isEmpty())
         return next(new httpError_1.default("Invalid inputs passed, please check your data.", 422));
     const { name, email, password } = req.body;
-    if (DUMMY_USERS.find((user) => user.email === email))
-        return next(new httpError_1.default("There us a user with that email", 422));
-    const createdUser = {
-        id: (0, uuid_1.v5)("https://www.w3.org/", uuid_1.v5.URL),
-        name,
-        email,
-        password,
-    };
-    DUMMY_USERS.push(createdUser);
-    res.status(201).json({ user: createdUser });
+    try {
+        const existingUser = await userModel_1.default.findOne({ email });
+        if (existingUser)
+            return next(new httpError_1.default("There is a user with that email, try with a different one.", 422));
+    }
+    catch (err) {
+        return next(new httpError_1.default("Signing up failed, please try again later.", 500));
+    }
+    let createdUser;
+    try {
+        createdUser = await userModel_1.default.create({
+            name,
+            email,
+            password,
+            image: "Image",
+            places: [],
+        });
+    }
+    catch (err) {
+        return new httpError_1.default("Signing up failed, please try again later.", 500);
+    }
+    res.status(201).json({ user: createdUser.toObject({ getters: true }) });
 };
 exports.signup = signup;
-const login = (req, res, next) => {
+const login = async (req, res, next) => {
     const errors = (0, validation_result_1.validationResult)(req);
     if (!errors.isEmpty())
         return next(new httpError_1.default("Invalid inputs passed, please check your data.", 422));
     const { email, password } = req.body;
-    const identifiedUser = DUMMY_USERS.find((user) => user.email === email);
-    if (!identifiedUser || identifiedUser.password !== password)
-        return next(new httpError_1.default("Could not log user in", 401));
+    let existingUser;
+    try {
+        existingUser = await userModel_1.default.findOne({ email });
+    }
+    catch (err) {
+        return next(new httpError_1.default("Logging in failed, please try again later.", 500));
+    }
+    if (!existingUser || existingUser.password !== password)
+        return next(new httpError_1.default("Invalid credentials, could not log you in.", 401));
     res.status(200).json({ message: "Logged user in!" });
 };
 exports.login = login;

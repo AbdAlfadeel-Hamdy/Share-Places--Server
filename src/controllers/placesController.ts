@@ -1,9 +1,11 @@
 import { Handler } from "express";
+import { startSession } from "mongoose";
 import { validationResult } from "express-validator/src/validation-result";
 
 import HttpError from "../models/httpError";
 import { getCordsForAddress } from "../utils/location";
 import Place from "../models/placeModel";
+import User from "../models/userModel";
 
 export const getPlaceById: Handler = async (req, res, next) => {
   const { placeId } = req.params;
@@ -75,8 +77,23 @@ export const createPlace: Handler = async (req, res, next) => {
     creator,
   });
 
+  let user;
   try {
-    await createdPlace.save();
+    user = await User.findById(creator);
+    if (!user)
+      return next(new HttpError("Could not find user with that ID.", 401));
+  } catch (err) {
+    return next(new HttpError("Creating place failed, please try again.", 500));
+  }
+
+  try {
+    const session = await startSession();
+    session.startTransaction();
+    await createdPlace.save({ session });
+    // @ts-ignore
+    user.places.push(createdPlace);
+    await user.save({ session });
+    await session.commitTransaction();
   } catch (err) {
     return next(
       new HttpError("Creating place failed, please try again later.", 500)
@@ -124,17 +141,24 @@ export const updatePlace: Handler = async (req, res, next) => {
 export const deletePlace: Handler = async (req, res, next) => {
   const { placeId } = req.params;
 
-  let place;
+  const place = await Place.findById(placeId).populate("creator");
+  if (!place)
+    return next(new HttpError("Could not find a place for that ID.", 404));
+
   try {
-    place = await Place.findByIdAndDelete(placeId);
+    const session = await startSession();
+    session.startTransaction();
+    await place.deleteOne({ session });
+    // @ts-ignore
+    await place.creator.places.pull(place);
+    // @ts-ignore
+    await place.creator.save();
+    await session.commitTransaction();
   } catch (err) {
     return next(
       new HttpError("Something went wrong, could not delete the place.", 500)
     );
   }
-
-  if (!place)
-    return next(new HttpError("Could not find a place for that ID.", 404));
 
   res.status(200).json({ message: "Deleted the place successfully." });
 };

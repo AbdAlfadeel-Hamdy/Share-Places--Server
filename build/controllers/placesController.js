@@ -4,10 +4,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deletePlace = exports.updatePlace = exports.createPlace = exports.getPlacesByUserId = exports.getPlaceById = void 0;
+const mongoose_1 = require("mongoose");
 const validation_result_1 = require("express-validator/src/validation-result");
 const httpError_1 = __importDefault(require("../models/httpError"));
 const location_1 = require("../utils/location");
 const placeModel_1 = __importDefault(require("../models/placeModel"));
+const userModel_1 = __importDefault(require("../models/userModel"));
 const getPlaceById = async (req, res, next) => {
     const { placeId } = req.params;
     let place;
@@ -62,8 +64,23 @@ const createPlace = async (req, res, next) => {
         location: coordinates,
         creator,
     });
+    let user;
     try {
-        await createdPlace.save();
+        user = await userModel_1.default.findById(creator);
+        if (!user)
+            return next(new httpError_1.default("Could not find user with that ID.", 401));
+    }
+    catch (err) {
+        return next(new httpError_1.default("Creating place failed, please try again.", 500));
+    }
+    try {
+        const session = await (0, mongoose_1.startSession)();
+        session.startTransaction();
+        await createdPlace.save({ session });
+        // @ts-ignore
+        user.places.push(createdPlace);
+        await user.save({ session });
+        await session.commitTransaction();
     }
     catch (err) {
         return next(new httpError_1.default("Creating place failed, please try again later.", 500));
@@ -97,15 +114,22 @@ const updatePlace = async (req, res, next) => {
 exports.updatePlace = updatePlace;
 const deletePlace = async (req, res, next) => {
     const { placeId } = req.params;
-    let place;
+    const place = await placeModel_1.default.findById(placeId).populate("creator");
+    if (!place)
+        return next(new httpError_1.default("Could not find a place for that ID.", 404));
     try {
-        place = await placeModel_1.default.findByIdAndDelete(placeId);
+        const session = await (0, mongoose_1.startSession)();
+        session.startTransaction();
+        await place.deleteOne({ session });
+        // @ts-ignore
+        await place.creator.places.pull(place);
+        // @ts-ignore
+        await place.creator.save();
+        await session.commitTransaction();
     }
     catch (err) {
         return next(new httpError_1.default("Something went wrong, could not delete the place.", 500));
     }
-    if (!place)
-        return next(new httpError_1.default("Could not find a place for that ID.", 404));
     res.status(200).json({ message: "Deleted the place successfully." });
 };
 exports.deletePlace = deletePlace;

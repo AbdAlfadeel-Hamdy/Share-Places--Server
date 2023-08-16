@@ -1,25 +1,24 @@
 import { Handler } from "express";
-import { v5 as uuidv5 } from "uuid";
 import HttpError from "../models/httpError";
 import { validationResult } from "express-validator/src/validation-result";
 
-const DUMMY_USERS = [
-  {
-    id: "u1",
-    name: "Gonz",
-    email: "test@test.com",
-    password: "test1234",
-  },
-];
+import User from "../models/userModel";
 
-export const getAllUsers: Handler = (req, res, next) => {
-  const users = DUMMY_USERS;
-  res.status(200).json({
-    users,
+export const getAllUsers: Handler = async (req, res, next) => {
+  let users;
+  try {
+    users = await User.find().select("-password");
+  } catch (err) {
+    return next(
+      new HttpError("Fetching users failed, please try again later.", 500)
+    );
+  }
+  res.json({
+    users: users.map((user) => user.toObject({ getters: true })),
   });
 };
 
-export const signup: Handler = (req, res, next) => {
+export const signup: Handler = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty())
     return next(
@@ -28,21 +27,38 @@ export const signup: Handler = (req, res, next) => {
 
   const { name, email, password } = req.body;
 
-  if (DUMMY_USERS.find((user) => user.email === email))
-    return next(new HttpError("There us a user with that email", 422));
+  try {
+    const existingUser = await User.findOne({ email });
+    if (existingUser)
+      return next(
+        new HttpError(
+          "There is a user with that email, try with a different one.",
+          422
+        )
+      );
+  } catch (err) {
+    return next(
+      new HttpError("Signing up failed, please try again later.", 500)
+    );
+  }
 
-  const createdUser = {
-    id: uuidv5("https://www.w3.org/", uuidv5.URL),
-    name,
-    email,
-    password,
-  };
-  DUMMY_USERS.push(createdUser);
+  let createdUser;
+  try {
+    createdUser = await User.create({
+      name,
+      email,
+      password,
+      image: "Image",
+      places: [],
+    });
+  } catch (err) {
+    return new HttpError("Signing up failed, please try again later.", 500);
+  }
 
-  res.status(201).json({ user: createdUser });
+  res.status(201).json({ user: createdUser.toObject({ getters: true }) });
 };
 
-export const login: Handler = (req, res, next) => {
+export const login: Handler = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty())
     return next(
@@ -51,9 +67,19 @@ export const login: Handler = (req, res, next) => {
 
   const { email, password } = req.body;
 
-  const identifiedUser = DUMMY_USERS.find((user) => user.email === email);
-  if (!identifiedUser || identifiedUser.password !== password)
-    return next(new HttpError("Could not log user in", 401));
+  let existingUser;
+  try {
+    existingUser = await User.findOne({ email });
+  } catch (err) {
+    return next(
+      new HttpError("Logging in failed, please try again later.", 500)
+    );
+  }
+
+  if (!existingUser || existingUser.password !== password)
+    return next(
+      new HttpError("Invalid credentials, could not log you in.", 401)
+    );
 
   res.status(200).json({ message: "Logged user in!" });
 };
