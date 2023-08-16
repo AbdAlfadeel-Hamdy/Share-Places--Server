@@ -1,4 +1,5 @@
 import express, { NextFunction, Response, Request } from "express";
+import mongoose from "mongoose";
 
 import placesRoutes from "./routes/placesRoutes";
 import usersRoutes from "./routes/usersRoutes";
@@ -21,4 +22,12 @@ app.use((err: HttpError, req: Request, res: Response, next: NextFunction) => {
     .json({ message: err.message || "Something went wrong." });
 });
 
-app.listen(5000);
+mongoose
+  .connect(
+    "mongodb+srv://abdel-fadeel:6KC8dcqKfmtACaWG@cluster0.5413src.mongodb.net/places?retryWrites=true&w=majority"
+  )
+  .then(() => {
+    app.listen(5000);
+    console.log("Connected to the database successfully.");
+  })
+  .catch((err) => console.log(err));
