@@ -39,10 +39,10 @@ export const getPlacesByUserId: Handler = async (req, res, next) => {
     );
   }
 
-  if (!places.length)
-    return next(
-      new HttpError("Could not find any places for the provided user ID.", 404)
-    );
+  // if (!places.length)
+  //   return next(
+  //     new HttpError("Could not find any places for the provided user ID.", 200)
+  //   );
 
   res.json({
     places: places.map((place) => place.toObject({ getters: true })),

@@ -4,9 +4,17 @@ import mongoose from "mongoose";
 import placesRoutes from "./routes/placesRoutes";
 import usersRoutes from "./routes/usersRoutes";
 import HttpError from "./models/httpError";
+import cors from "cors";
 
 const app = express();
 app.use(express.json());
+
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+);
 
 app.use("/api/places", placesRoutes);
 app.use("/api/users", usersRoutes);

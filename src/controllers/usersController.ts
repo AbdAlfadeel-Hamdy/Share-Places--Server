@@ -81,5 +81,10 @@ export const login: Handler = async (req, res, next) => {
       new HttpError("Invalid credentials, could not log you in.", 401)
     );
 
-  res.status(200).json({ message: "Logged user in!" });
+  res
+    .status(200)
+    .json({
+      message: "Logged user in!",
+      user: existingUser.toObject({ getters: true }),
+    });
 };
