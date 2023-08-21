@@ -2,6 +2,7 @@ import { Router } from "express";
 import { check } from "express-validator";
 
 import * as placesController from "../controllers/placesController";
+import fileUpload from "../middleware/fileUpload";
 
 const router = Router();
 
@@ -17,6 +18,7 @@ router
 router.get("/user/:userId", placesController.getPlacesByUserId);
 router.post(
   "/",
+  fileUpload.single("image"),
   [
     check("title").not().isEmpty(),
     check("description").isLength({ min: 5 }),

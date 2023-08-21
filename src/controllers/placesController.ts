@@ -1,3 +1,6 @@
+import fs from "fs";
+import path from "path";
+
 import { Handler } from "express";
 import { startSession } from "mongoose";
 import { validationResult } from "express-validator/src/validation-result";
@@ -71,7 +74,7 @@ export const createPlace: Handler = async (req, res, next) => {
   const createdPlace = new Place({
     title,
     description,
-    image: "DummyURL",
+    image: req.file?.path,
     address,
     location: coordinates,
     creator,
@@ -159,6 +162,10 @@ export const deletePlace: Handler = async (req, res, next) => {
       new HttpError("Something went wrong, could not delete the place.", 500)
     );
   }
+
+  fs.unlink(place.image, (err) => {
+    if (err) console.log(err);
+  });
 
   res.status(200).json({ message: "Deleted the place successfully." });
 };

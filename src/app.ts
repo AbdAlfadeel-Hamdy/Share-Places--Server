@@ -1,3 +1,6 @@
+import fs from "fs";
+import path from "path";
+
 import express, { NextFunction, Response, Request } from "express";
 import mongoose from "mongoose";
 
@@ -16,6 +19,8 @@ app.use(
   })
 );
 
+app.use("/uploads/images", express.static(path.join("uploads", "images")));
+
 app.use("/api/places", placesRoutes);
 app.use("/api/users", usersRoutes);
 
@@ -25,6 +30,12 @@ app.use((req, res, next) => {
 
 app.use((err: HttpError, req: Request, res: Response, next: NextFunction) => {
   if (res.headersSent) return next(err);
+  if (req.file)
+    fs.unlink(req.file.path, (err) => {
+      console.log(req.file?.path);
+      if (err) return console.log(err);
+      console.log(`${req.file?.path} was deleted.`);
+    });
   res
     .status(err.statusCode || 500)
     .json({ message: err.message || "Something went wrong." });

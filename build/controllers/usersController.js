@@ -21,6 +21,7 @@ const getAllUsers = async (req, res, next) => {
 };
 exports.getAllUsers = getAllUsers;
 const signup = async (req, res, next) => {
+    var _a;
     const errors = (0, validation_result_1.validationResult)(req);
     if (!errors.isEmpty())
         return next(new httpError_1.default("Invalid inputs passed, please check your data.", 422));
@@ -39,7 +40,7 @@ const signup = async (req, res, next) => {
             name,
             email,
             password,
-            image: "Image",
+            image: (_a = req.file) === null || _a === void 0 ? void 0 : _a.path,
             places: [],
         });
     }
@@ -63,9 +64,7 @@ const login = async (req, res, next) => {
     }
     if (!existingUser || existingUser.password !== password)
         return next(new httpError_1.default("Invalid credentials, could not log you in.", 401));
-    res
-        .status(200)
-        .json({
+    res.status(200).json({
         message: "Logged user in!",
         user: existingUser.toObject({ getters: true }),
     });

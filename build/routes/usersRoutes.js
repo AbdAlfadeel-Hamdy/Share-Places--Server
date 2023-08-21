@@ -22,13 +22,17 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const express_validator_1 = require("express-validator");
 const usersController = __importStar(require("../controllers/usersController"));
+const fileUpload_1 = __importDefault(require("../middleware/fileUpload"));
 const router = (0, express_1.Router)();
 router.get("/", usersController.getAllUsers);
-router.post("/signup", [
+router.post("/signup", fileUpload_1.default.single("image"), [
     (0, express_validator_1.check)("name").not().isEmpty(),
     (0, express_validator_1.check)("email").normalizeEmail().isEmail(),
     (0, express_validator_1.check)("password").isLength({ min: 6 }),

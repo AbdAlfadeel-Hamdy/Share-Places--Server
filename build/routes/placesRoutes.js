@@ -22,10 +22,14 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const express_validator_1 = require("express-validator");
 const placesController = __importStar(require("../controllers/placesController"));
+const fileUpload_1 = __importDefault(require("../middleware/fileUpload"));
 const router = (0, express_1.Router)();
 router
     .route("/:placeId")
@@ -33,7 +37,7 @@ router
     .patch([(0, express_validator_1.check)("title").not().isEmpty(), (0, express_validator_1.check)("description").isLength({ min: 5 })], placesController.updatePlace)
     .delete(placesController.deletePlace);
 router.get("/user/:userId", placesController.getPlacesByUserId);
-router.post("/", [
+router.post("/", fileUpload_1.default.single("image"), [
     (0, express_validator_1.check)("title").not().isEmpty(),
     (0, express_validator_1.check)("description").isLength({ min: 5 }),
     (0, express_validator_1.check)("address").not().isEmpty(),
