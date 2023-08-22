@@ -157,7 +157,7 @@ export const deletePlace: Handler = async (
   const place = await Place.findById(placeId).populate("creator");
   if (!place)
     return next(new HttpError("Could not find a place for that ID.", 404));
-  if (place?.creator.toString() !== req.userData?.userId)
+  if ((place?.creator as any).id.toString() !== req.userData?.userId)
     return next(
       new HttpError("You are not allowed to delete this place.", 401)
     );

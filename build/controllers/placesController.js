@@ -122,7 +122,7 @@ const deletePlace = async (req, res, next) => {
     const place = await placeModel_1.default.findById(placeId).populate("creator");
     if (!place)
         return next(new httpError_1.default("Could not find a place for that ID.", 404));
-    if ((place === null || place === void 0 ? void 0 : place.creator.toString()) !== ((_a = req.userData) === null || _a === void 0 ? void 0 : _a.userId))
+    if ((place === null || place === void 0 ? void 0 : place.creator).id.toString() !== ((_a = req.userData) === null || _a === void 0 ? void 0 : _a.userId))
         return next(new httpError_1.default("You are not allowed to delete this place.", 401));
     try {
         const session = await (0, mongoose_1.startSession)();
