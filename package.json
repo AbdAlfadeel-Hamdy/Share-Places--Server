@@ -4,7 +4,7 @@
   "description": "",
   "main": "./build/app.js",
   "scripts": {
-    "build": "tsc --watch",
+    "start:build": "tsc --watch",
     "dev": "nodemon build/app.js",
     "start": "node build/app.js",
     "start:dev": "concurrently npm:run:build npm:run:dev"
