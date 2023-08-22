@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 
+import dotenv from "dotenv";
 import express, { NextFunction, Response, Request } from "express";
 import mongoose from "mongoose";
 
@@ -8,6 +9,8 @@ import placesRoutes from "./routes/placesRoutes";
 import usersRoutes from "./routes/usersRoutes";
 import HttpError from "./models/httpError";
 import cors from "cors";
+
+dotenv.config({ path: "./config.env" });
 
 const app = express();
 app.use(express.json());

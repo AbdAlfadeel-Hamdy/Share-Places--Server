@@ -44,11 +44,11 @@ const getPlacesByUserId = async (req, res, next) => {
 };
 exports.getPlacesByUserId = getPlacesByUserId;
 const createPlace = async (req, res, next) => {
-    var _a;
+    var _a, _b, _c;
     const errors = (0, validation_result_1.validationResult)(req);
     if (!errors.isEmpty())
         return next(new httpError_1.default("Invalid inputs passed, please check your data.", 422));
-    const { title, description, address, creator } = req.body;
+    const { title, description, address } = req.body;
     let coordinates;
     try {
         const data = await (0, location_1.getCordsForAddress)(address);
@@ -66,11 +66,11 @@ const createPlace = async (req, res, next) => {
         image: (_a = req.file) === null || _a === void 0 ? void 0 : _a.path,
         address,
         location: coordinates,
-        creator,
+        creator: (_b = req.userData) === null || _b === void 0 ? void 0 : _b.userId,
     });
     let user;
     try {
-        user = await userModel_1.default.findById(creator);
+        user = await userModel_1.default.findById((_c = req.userData) === null || _c === void 0 ? void 0 : _c.userId);
         if (!user)
             return next(new httpError_1.default("Could not find user with that ID.", 401));
     }
@@ -93,6 +93,7 @@ const createPlace = async (req, res, next) => {
 };
 exports.createPlace = createPlace;
 const updatePlace = async (req, res, next) => {
+    var _a;
     const errors = (0, validation_result_1.validationResult)(req);
     if (!errors.isEmpty())
         return next(new httpError_1.default("Invalid inputs passed, please check your data.", 422));
@@ -100,27 +101,29 @@ const updatePlace = async (req, res, next) => {
     const { placeId } = req.params;
     let updatedPlace;
     try {
-        updatedPlace = await placeModel_1.default.findByIdAndUpdate(placeId, {
-            title,
-            description,
-        }, {
-            new: true,
-            runValidators: true,
-        });
+        updatedPlace = await placeModel_1.default.findById(placeId);
+        if (!updatedPlace)
+            return next(new httpError_1.default("Could not find a place for that ID.", 404));
+        if ((updatedPlace === null || updatedPlace === void 0 ? void 0 : updatedPlace.creator.toString()) !== ((_a = req.userData) === null || _a === void 0 ? void 0 : _a.userId))
+            return next(new httpError_1.default("You are not allowed to edit this place.", 401));
+        updatedPlace.title = title;
+        updatedPlace.description = description;
+        updatedPlace.save();
     }
     catch (err) {
         return next(new httpError_1.default("Something went wrong, could not update place.", 500));
     }
-    if (!updatedPlace)
-        return next(new httpError_1.default("Could not find a place for that ID.", 404));
     res.status(200).json({ place: updatedPlace.toObject({ getters: true }) });
 };
 exports.updatePlace = updatePlace;
 const deletePlace = async (req, res, next) => {
+    var _a;
     const { placeId } = req.params;
     const place = await placeModel_1.default.findById(placeId).populate("creator");
     if (!place)
         return next(new httpError_1.default("Could not find a place for that ID.", 404));
+    if ((place === null || place === void 0 ? void 0 : place.creator.toString()) !== ((_a = req.userData) === null || _a === void 0 ? void 0 : _a.userId))
+        return next(new httpError_1.default("You are not allowed to delete this place.", 401));
     try {
         const session = await (0, mongoose_1.startSession)();
         session.startTransaction();

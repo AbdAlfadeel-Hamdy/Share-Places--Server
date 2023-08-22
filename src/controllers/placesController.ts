@@ -1,5 +1,4 @@
 import fs from "fs";
-import path from "path";
 
 import { Handler } from "express";
 import { startSession } from "mongoose";
@@ -9,6 +8,7 @@ import HttpError from "../models/httpError";
 import { getCordsForAddress } from "../utils/location";
 import Place from "../models/placeModel";
 import User from "../models/userModel";
+import { RequestWithUserData } from "../middleware/checkAuth";
 
 export const getPlaceById: Handler = async (req, res, next) => {
   const { placeId } = req.params;
@@ -52,14 +52,18 @@ export const getPlacesByUserId: Handler = async (req, res, next) => {
   });
 };
 
-export const createPlace: Handler = async (req, res, next) => {
+export const createPlace: Handler = async (
+  req: RequestWithUserData,
+  res,
+  next
+) => {
   const errors = validationResult(req);
   if (!errors.isEmpty())
     return next(
       new HttpError("Invalid inputs passed, please check your data.", 422)
     );
 
-  const { title, description, address, creator } = req.body;
+  const { title, description, address } = req.body;
   let coordinates;
   try {
     const data: any = await getCordsForAddress(address);
@@ -77,12 +81,12 @@ export const createPlace: Handler = async (req, res, next) => {
     image: req.file?.path,
     address,
     location: coordinates,
-    creator,
+    creator: req.userData?.userId,
   });
 
   let user;
   try {
-    user = await User.findById(creator);
+    user = await User.findById(req.userData?.userId);
     if (!user)
       return next(new HttpError("Could not find user with that ID.", 401));
   } catch (err) {
@@ -106,7 +110,11 @@ export const createPlace: Handler = async (req, res, next) => {
   res.status(201).json({ place: createdPlace });
 };
 
-export const updatePlace: Handler = async (req, res, next) => {
+export const updatePlace: Handler = async (
+  req: RequestWithUserData,
+  res,
+  next
+) => {
   const errors = validationResult(req);
   if (!errors.isEmpty())
     return next(
@@ -118,35 +126,41 @@ export const updatePlace: Handler = async (req, res, next) => {
 
   let updatedPlace;
   try {
-    updatedPlace = await Place.findByIdAndUpdate(
-      placeId,
-      {
-        title,
-        description,
-      },
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
+    updatedPlace = await Place.findById(placeId);
+    if (!updatedPlace)
+      return next(new HttpError("Could not find a place for that ID.", 404));
+
+    if (updatedPlace?.creator.toString() !== req.userData?.userId)
+      return next(
+        new HttpError("You are not allowed to edit this place.", 401)
+      );
+    updatedPlace.title = title;
+    updatedPlace.description = description;
+
+    updatedPlace.save();
   } catch (err) {
     return next(
       new HttpError("Something went wrong, could not update place.", 500)
     );
   }
 
-  if (!updatedPlace)
-    return next(new HttpError("Could not find a place for that ID.", 404));
-
   res.status(200).json({ place: updatedPlace.toObject({ getters: true }) });
 };
 
-export const deletePlace: Handler = async (req, res, next) => {
+export const deletePlace: Handler = async (
+  req: RequestWithUserData,
+  res,
+  next
+) => {
   const { placeId } = req.params;
 
   const place = await Place.findById(placeId).populate("creator");
   if (!place)
     return next(new HttpError("Could not find a place for that ID.", 404));
+  if (place?.creator.toString() !== req.userData?.userId)
+    return next(
+      new HttpError("You are not allowed to delete this place.", 401)
+    );
 
   try {
     const session = await startSession();

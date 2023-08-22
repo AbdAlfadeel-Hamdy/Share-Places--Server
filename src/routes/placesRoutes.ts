@@ -3,19 +3,23 @@ import { check } from "express-validator";
 
 import * as placesController from "../controllers/placesController";
 import fileUpload from "../middleware/fileUpload";
+import checkAuth from "../middleware/checkAuth";
 
 const router = Router();
 
+router.get("/:placeId", placesController.getPlaceById);
+router.get("/user/:userId", placesController.getPlacesByUserId);
+
+router.use(checkAuth);
+
 router
   .route("/:placeId")
-  .get(placesController.getPlaceById)
   .patch(
     [check("title").not().isEmpty(), check("description").isLength({ min: 5 })],
     placesController.updatePlace
   )
   .delete(placesController.deletePlace);
 
-router.get("/user/:userId", placesController.getPlacesByUserId);
 router.post(
   "/",
   fileUpload.single("image"),

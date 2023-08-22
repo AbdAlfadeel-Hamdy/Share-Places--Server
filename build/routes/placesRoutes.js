@@ -30,13 +30,15 @@ const express_1 = require("express");
 const express_validator_1 = require("express-validator");
 const placesController = __importStar(require("../controllers/placesController"));
 const fileUpload_1 = __importDefault(require("../middleware/fileUpload"));
+const checkAuth_1 = __importDefault(require("../middleware/checkAuth"));
 const router = (0, express_1.Router)();
+router.get("/:placeId", placesController.getPlaceById);
+router.get("/user/:userId", placesController.getPlacesByUserId);
+router.use(checkAuth_1.default);
 router
     .route("/:placeId")
-    .get(placesController.getPlaceById)
     .patch([(0, express_validator_1.check)("title").not().isEmpty(), (0, express_validator_1.check)("description").isLength({ min: 5 })], placesController.updatePlace)
     .delete(placesController.deletePlace);
-router.get("/user/:userId", placesController.getPlacesByUserId);
 router.post("/", fileUpload_1.default.single("image"), [
     (0, express_validator_1.check)("title").not().isEmpty(),
     (0, express_validator_1.check)("description").isLength({ min: 5 }),

@@ -5,12 +5,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
+const dotenv_1 = __importDefault(require("dotenv"));
 const express_1 = __importDefault(require("express"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const placesRoutes_1 = __importDefault(require("./routes/placesRoutes"));
 const usersRoutes_1 = __importDefault(require("./routes/usersRoutes"));
 const httpError_1 = __importDefault(require("./models/httpError"));
 const cors_1 = __importDefault(require("cors"));
+dotenv_1.default.config({ path: "./config.env" });
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
 app.use((0, cors_1.default)({

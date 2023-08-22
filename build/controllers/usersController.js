@@ -4,8 +4,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.login = exports.signup = exports.getAllUsers = void 0;
-const httpError_1 = __importDefault(require("../models/httpError"));
+const bcryptjs_1 = __importDefault(require("bcryptjs"));
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const validation_result_1 = require("express-validator/src/validation-result");
+const httpError_1 = __importDefault(require("../models/httpError"));
 const userModel_1 = __importDefault(require("../models/userModel"));
 const getAllUsers = async (req, res, next) => {
     let users;
@@ -34,20 +36,38 @@ const signup = async (req, res, next) => {
     catch (err) {
         return next(new httpError_1.default("Signing up failed, please try again later.", 500));
     }
+    let hashedPassword;
+    try {
+        hashedPassword = await bcryptjs_1.default.hash(password, 12);
+    }
+    catch (err) {
+        return next(new httpError_1.default("Could not create user, please try again.", 500));
+    }
     let createdUser;
     try {
         createdUser = await userModel_1.default.create({
             name,
             email,
-            password,
+            password: hashedPassword,
             image: (_a = req.file) === null || _a === void 0 ? void 0 : _a.path,
             places: [],
         });
     }
     catch (err) {
-        return new httpError_1.default("Signing up failed, please try again later.", 500);
+        return next(new httpError_1.default("Signing up failed, please try again later.", 500));
     }
-    res.status(201).json({ user: createdUser.toObject({ getters: true }) });
+    let token;
+    try {
+        token = jsonwebtoken_1.default.sign({ userId: createdUser.id, email: createdUser.email }, process.env.JWT_SECRET_KEY, {
+            expiresIn: "1h",
+        });
+    }
+    catch (err) {
+        return next(new httpError_1.default("Signing up failed, please try again later.", 500));
+    }
+    res
+        .status(201)
+        .json({ userId: createdUser.id, email: createdUser.email, token });
 };
 exports.signup = signup;
 const login = async (req, res, next) => {
@@ -62,11 +82,30 @@ const login = async (req, res, next) => {
     catch (err) {
         return next(new httpError_1.default("Logging in failed, please try again later.", 500));
     }
-    if (!existingUser || existingUser.password !== password)
+    if (!existingUser)
         return next(new httpError_1.default("Invalid credentials, could not log you in.", 401));
+    let isValidPassword = false;
+    try {
+        isValidPassword = await bcryptjs_1.default.compare(password, existingUser.password);
+    }
+    catch (err) {
+        return next(new httpError_1.default("Could not log you in, please check your credentials and try again.", 500));
+    }
+    if (!isValidPassword)
+        return next(new httpError_1.default("Invalid credentials, could not log you in.", 401));
+    let token;
+    try {
+        token = jsonwebtoken_1.default.sign({ userId: existingUser.id, email: existingUser.email }, process.env.JWT_SECRET_KEY, {
+            expiresIn: "1h",
+        });
+    }
+    catch (err) {
+        return next(new httpError_1.default("Logging in failed, please try again later.", 500));
+    }
     res.status(200).json({
-        message: "Logged user in!",
-        user: existingUser.toObject({ getters: true }),
+        userId: existingUser.id,
+        email: existingUser.email,
+        token,
     });
 };
 exports.login = login;
