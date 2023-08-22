@@ -4,10 +4,10 @@
   "description": "",
   "main": "./build/app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start:build": "tsc --watch",
-    "start:run": "nodemon build/app.js",
-    "start": "concurrently npm:start:*"
+    "build": "tsc --watch",
+    "dev": "nodemon build/app.js",
+    "start": "node build/app.js",
+    "start:dev": "concurrently npm:run:build npm:run:dev"
   },
   "author": "",
   "license": "ISC",

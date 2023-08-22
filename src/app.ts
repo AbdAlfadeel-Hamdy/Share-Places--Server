@@ -35,7 +35,6 @@ app.use((err: HttpError, req: Request, res: Response, next: NextFunction) => {
   if (res.headersSent) return next(err);
   if (req.file)
     fs.unlink(req.file.path, (err) => {
-      console.log(req.file?.path);
       if (err) return console.log(err);
       console.log(`${req.file?.path} was deleted.`);
     });
@@ -46,10 +45,10 @@ app.use((err: HttpError, req: Request, res: Response, next: NextFunction) => {
 
 mongoose
   .connect(
-    "mongodb+srv://abdel-fadeel:6KC8dcqKfmtACaWG@cluster0.5413src.mongodb.net/places?retryWrites=true&w=majority"
+    `mongodb+srv://${process.env.DATABASE_USER}:${process.env.DATABASE_PASSWORD}@cluster0.5413src.mongodb.net/${process.env.DATABASE_NAME}?retryWrites=true&w=majority`
   )
   .then(() => {
-    app.listen(5000);
+    app.listen(process.env.PORT || 5000);
     console.log("Connected to the database successfully.");
   })
   .catch((err) => console.log(err));

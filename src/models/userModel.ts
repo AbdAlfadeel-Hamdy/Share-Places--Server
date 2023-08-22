@@ -1,5 +1,4 @@
 import { Schema, Types, model } from "mongoose";
-// import uniqueValidator from "mongoose-unique-validator";
 
 const userSchema = new Schema({
   name: {
@@ -28,7 +27,5 @@ const userSchema = new Schema({
     },
   ],
 });
-
-// userSchema.plugin(uniqueValidator);
 
 export default model("User", userSchema);

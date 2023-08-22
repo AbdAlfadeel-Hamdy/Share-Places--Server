@@ -1,11 +1,9 @@
 import axios from "axios";
 import HttpError from "../models/httpError";
 
-const API_KEY = "824759570046973493888x52643";
-
 export const getCordsForAddress = async (location: string) => {
   const result: any = await axios.get(
-    `https://geocode.xyz/${location}?json=1&auth=${API_KEY}`
+    `https://geocode.xyz/${location}?json=1&auth=${process.env.GEOCODE_API_KEY}`
   );
 
   if (result.data.error)

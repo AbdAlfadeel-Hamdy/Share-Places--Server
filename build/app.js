@@ -30,20 +30,19 @@ app.use((err, req, res, next) => {
         return next(err);
     if (req.file)
         fs_1.default.unlink(req.file.path, (err) => {
-            var _a, _b;
-            console.log((_a = req.file) === null || _a === void 0 ? void 0 : _a.path);
+            var _a;
             if (err)
                 return console.log(err);
-            console.log(`${(_b = req.file) === null || _b === void 0 ? void 0 : _b.path} was deleted.`);
+            console.log(`${(_a = req.file) === null || _a === void 0 ? void 0 : _a.path} was deleted.`);
         });
     res
         .status(err.statusCode || 500)
         .json({ message: err.message || "Something went wrong." });
 });
 mongoose_1.default
-    .connect("mongodb+srv://abdel-fadeel:6KC8dcqKfmtACaWG@cluster0.5413src.mongodb.net/places?retryWrites=true&w=majority")
+    .connect(`mongodb+srv://${process.env.DATABASE_USER}:${process.env.DATABASE_PASSWORD}@cluster0.5413src.mongodb.net/${process.env.DATABASE_NAME}?retryWrites=true&w=majority`)
     .then(() => {
-    app.listen(5000);
+    app.listen(process.env.PORT || 5000);
     console.log("Connected to the database successfully.");
 })
     .catch((err) => console.log(err));
