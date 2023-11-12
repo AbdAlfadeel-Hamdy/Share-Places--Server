@@ -4,10 +4,8 @@
   "description": "",
   "main": "./build/app.js",
   "scripts": {
-    "start:build": "tsc --watch",
-    "dev": "nodemon build/app.js",
     "start": "node build/app.js",
-    "start:dev": "concurrently npm:run:build npm:run:dev"
+    "dev": "concurrently \"npx tsc --watch\" \"node --watch build/app.js\""
   },
   "author": "",
   "license": "ISC",
