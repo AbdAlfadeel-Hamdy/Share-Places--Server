@@ -17,12 +17,21 @@ const app = express();
 // Body Parser
 app.use(express.json());
 // CORS
-app.use(
-  cors({
-    origin: true,
-    credentials: true,
-  })
-);
+// app.use(
+//   cors({
+//     origin: true,
+//     credentials: true,
+//   })
+// );
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content-Type, Accept, Authorization'
+  );
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE');
+  next();
+});
 // Security Packages
 app.use(helmet());
 app.use(mongoSanitize());
