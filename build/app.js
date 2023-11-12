@@ -17,6 +17,7 @@ const users_1 = __importDefault(require("./routes/users"));
 const httpError_1 = __importDefault(require("./models/httpError"));
 // .env files
 dotenv_1.default.config();
+// Create HTTP Server
 const app = (0, express_1.default)();
 // Body Parser
 app.use(express_1.default.json());
@@ -25,20 +26,14 @@ app.use((0, cors_1.default)({
     origin: true,
     credentials: true,
 }));
-// app.use((req, res, next) => {
-//   res.setHeader('Access-Control-Allow-Origin', '*');
-//   res.setHeader(
-//     'Access-Control-Allow-Headers',
-//     'Origin, X-Requested-With, Content-Type, Accept, Authorization'
-//   );
-//   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE');
-//   next();
-// });
 // Security Packages
 app.use((0, helmet_1.default)());
 app.use((0, express_mongo_sanitize_1.default)());
 // Static Files
-app.use('/uploads/images', express_1.default.static(path_1.default.join('uploads', 'images')));
+app.use('/uploads/images', (req, res, next) => {
+    res.setHeader('cross-origin-resource-policy', 'cross-origin');
+    next();
+}, express_1.default.static(path_1.default.join('uploads', 'images')));
 // ROUTERS
 app.use('/api/v1/places', places_1.default);
 app.use('/api/v1/users', users_1.default);

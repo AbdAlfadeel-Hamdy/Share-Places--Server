@@ -12,7 +12,7 @@ import usersRouter from './routes/users';
 import HttpError from './models/httpError';
 // .env files
 dotenv.config();
-
+// Create HTTP Server
 const app = express();
 // Body Parser
 app.use(express.json());
@@ -23,20 +23,18 @@ app.use(
     credentials: true,
   })
 );
-// app.use((req, res, next) => {
-//   res.setHeader('Access-Control-Allow-Origin', '*');
-//   res.setHeader(
-//     'Access-Control-Allow-Headers',
-//     'Origin, X-Requested-With, Content-Type, Accept, Authorization'
-//   );
-//   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE');
-//   next();
-// });
 // Security Packages
 app.use(helmet());
 app.use(mongoSanitize());
 // Static Files
-app.use('/uploads/images', express.static(path.join('uploads', 'images')));
+app.use(
+  '/uploads/images',
+  (req, res, next) => {
+    res.setHeader('cross-origin-resource-policy', 'cross-origin');
+    next();
+  },
+  express.static(path.join('uploads', 'images'))
+);
 // ROUTERS
 app.use('/api/v1/places', placesRouter);
 app.use('/api/v1/users', usersRouter);
