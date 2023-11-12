@@ -8,6 +8,7 @@ const path_1 = __importDefault(require("path"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const express_1 = __importDefault(require("express"));
 const mongoose_1 = __importDefault(require("mongoose"));
+const cors_1 = __importDefault(require("cors"));
 const helmet_1 = __importDefault(require("helmet"));
 const express_mongo_sanitize_1 = __importDefault(require("express-mongo-sanitize"));
 // ROUTERS
@@ -20,18 +21,19 @@ const app = (0, express_1.default)();
 // Body Parser
 app.use(express_1.default.json());
 // CORS
-// app.use(
-//   cors({
-//     origin: true,
-//     credentials: true,
-//   })
-// );
-app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE');
-    next();
-});
+app.use((0, cors_1.default)({
+    origin: true,
+    credentials: true,
+}));
+// app.use((req, res, next) => {
+//   res.setHeader('Access-Control-Allow-Origin', '*');
+//   res.setHeader(
+//     'Access-Control-Allow-Headers',
+//     'Origin, X-Requested-With, Content-Type, Accept, Authorization'
+//   );
+//   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE');
+//   next();
+// });
 // Security Packages
 app.use((0, helmet_1.default)());
 app.use((0, express_mongo_sanitize_1.default)());
