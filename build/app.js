@@ -3,12 +3,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const fs_1 = __importDefault(require("fs"));
+// import fs from 'fs';
 const path_1 = __importDefault(require("path"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const express_1 = __importDefault(require("express"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const cors_1 = __importDefault(require("cors"));
+const helmet_1 = __importDefault(require("helmet"));
+const express_mongo_sanitize_1 = __importDefault(require("express-mongo-sanitize"));
 // ROUTERS
 const places_1 = __importDefault(require("./routes/places"));
 const users_1 = __importDefault(require("./routes/users"));
@@ -23,8 +25,12 @@ app.use((0, cors_1.default)({
     origin: true,
     credentials: true,
 }));
+// Security Packages
+app.use((0, helmet_1.default)());
+app.use((0, express_mongo_sanitize_1.default)());
 // Static Files
 app.use('/uploads/images', express_1.default.static(path_1.default.join('uploads', 'images')));
+// app.use(express.static(path.join('uploads', 'images')));
 // ROUTERS
 app.use('/api/places', places_1.default);
 app.use('/api/users', users_1.default);
@@ -36,13 +42,11 @@ app.use((req, res, next) => {
 app.use((err, req, res, next) => {
     if (res.headersSent)
         return next(err);
-    if (req.file)
-        fs_1.default.unlink(req.file.path, err => {
-            var _a;
-            if (err)
-                return console.log(err);
-            console.log(`${(_a = req.file) === null || _a === void 0 ? void 0 : _a.path} was deleted.`);
-        });
+    // if (req.file)
+    //   fs.unlink(req.file.path, err => {
+    //     if (err) return console.log(err);
+    //     console.log(`${req.file?.path} was deleted.`);
+    //   });
     res
         .status(err.statusCode || 500)
         .json({ message: err.message || 'Something went wrong.' });
