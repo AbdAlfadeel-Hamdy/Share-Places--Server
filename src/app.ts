@@ -30,8 +30,8 @@ app.use(mongoSanitize());
 app.use('/uploads/images', express.static(path.join('uploads', 'images')));
 // app.use(express.static(path.join('uploads', 'images')));
 // ROUTERS
-app.use('/api/places', placesRouter);
-app.use('/api/users', usersRouter);
+app.use('/api/v1/places', placesRouter);
+app.use('/api/v1/users', usersRouter);
 // NOT FOUND ROUTE
 app.use((req, res, next) => {
   next(new HttpError('Could not find this route.', 404));
