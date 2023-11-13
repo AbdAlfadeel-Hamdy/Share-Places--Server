@@ -74,8 +74,9 @@ export const createPlace: Handler = async (
   if (req.file) {
     const file = formatImage(req.file);
     if (file) {
-      const { secure_url } = await cloudinary.uploader.upload(file);
+      const { secure_url, public_id } = await cloudinary.uploader.upload(file);
       req.body.image = secure_url;
+      req.body.imagePublicId = public_id;
     }
   }
 
@@ -174,9 +175,8 @@ export const deletePlace: Handler = async (
     );
   }
 
-  fs.unlink(place.image, err => {
-    if (err) console.log(err);
-  });
+  if (place?.imagePublicId)
+    await cloudinary.uploader.destroy(place.imagePublicId);
 
   res.status(200).json({ message: 'Deleted the place successfully.' });
 };

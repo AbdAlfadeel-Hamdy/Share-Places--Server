@@ -13,6 +13,7 @@ const placeSchema = new Schema({
     type: String,
     required: true,
   },
+  imagePublicId: String,
   address: {
     type: String,
     required: true,

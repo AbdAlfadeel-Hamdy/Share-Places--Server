@@ -3,7 +3,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const fs_1 = __importDefault(require("fs"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const express_1 = __importDefault(require("express"));
 const mongoose_1 = __importDefault(require("mongoose"));
@@ -46,13 +45,6 @@ app.use((req, res, next) => {
 app.use((err, req, res, next) => {
     if (res.headersSent)
         return next(err);
-    if (req.file)
-        fs_1.default.unlink(req.file.path, err => {
-            var _a;
-            if (err)
-                return console.log(err);
-            console.log(`${(_a = req.file) === null || _a === void 0 ? void 0 : _a.path} was deleted.`);
-        });
     res
         .status(err.statusCode || 500)
         .json({ message: err.message || 'Something went wrong.' });
