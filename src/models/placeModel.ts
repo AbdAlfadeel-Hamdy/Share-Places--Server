@@ -1,4 +1,4 @@
-import { Schema, model, Types } from "mongoose";
+import { Schema, model, Types } from 'mongoose';
 
 const placeSchema = new Schema({
   title: {
@@ -30,8 +30,8 @@ const placeSchema = new Schema({
   creator: {
     type: Types.ObjectId,
     required: true,
-    ref: "User",
+    ref: 'User',
   },
 });
 
-export default model("Place", placeSchema);
+export default model('Place', placeSchema);

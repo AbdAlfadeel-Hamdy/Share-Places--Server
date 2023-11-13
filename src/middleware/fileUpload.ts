@@ -19,7 +19,6 @@ const fileUpload = multer({
   },
   storage,
   fileFilter: (req, file, cb) => {
-    console.log(file.mimetype);
     if (!MIME_TYPE_MAP[file.mimetype])
       return cb(new HttpError('Invalid mime type!', 400));
     cb(null, true);

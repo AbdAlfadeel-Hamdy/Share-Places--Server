@@ -4,13 +4,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(require("fs"));
-const path_1 = __importDefault(require("path"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const express_1 = __importDefault(require("express"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const cors_1 = __importDefault(require("cors"));
 const helmet_1 = __importDefault(require("helmet"));
 const express_mongo_sanitize_1 = __importDefault(require("express-mongo-sanitize"));
+const cloudinary_1 = require("cloudinary");
 // ROUTERS
 const places_1 = __importDefault(require("./routes/places"));
 const users_1 = __importDefault(require("./routes/users"));
@@ -29,11 +29,12 @@ app.use((0, cors_1.default)({
 // Security Packages
 app.use((0, helmet_1.default)());
 app.use((0, express_mongo_sanitize_1.default)());
-// Static Files
-app.use('/uploads/images', (req, res, next) => {
-    res.setHeader('cross-origin-resource-policy', 'cross-origin');
-    next();
-}, express_1.default.static(path_1.default.join('uploads', 'images')));
+// Setting Up Cloudinary
+cloudinary_1.v2.config({
+    cloud_name: process.env.CLOUD_NAME,
+    api_key: process.env.CLOUD_API_KEY,
+    api_secret: process.env.CLOUD_API_SECRET,
+});
 // ROUTERS
 app.use('/api/v1/places', places_1.default);
 app.use('/api/v1/users', users_1.default);
