@@ -6,9 +6,9 @@ import helmet from 'helmet';
 import mongoSanitize from 'express-mongo-sanitize';
 import { v2 as cloudinary } from 'cloudinary';
 // ROUTERS
-import placesRouter from './routes/places';
-import usersRouter from './routes/users';
-import HttpError from './models/httpError';
+import placesRouter from '../routes/places';
+import usersRouter from '../routes/users';
+import HttpError from '../models/httpError';
 // .env files
 dotenv.config();
 // Create HTTP Server

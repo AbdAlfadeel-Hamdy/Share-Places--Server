@@ -1,5 +1,5 @@
-import axios from "axios";
-import HttpError from "../models/httpError";
+import axios from 'axios';
+import HttpError from '../models/httpError';
 
 export const getCordsForAddress = async (location: string) => {
   const result: any = await axios.get(
@@ -8,7 +8,7 @@ export const getCordsForAddress = async (location: string) => {
 
   if (result.data.error)
     throw new HttpError(
-      "Could not find location for the specified address.",
+      'Could not find location for the specified address.',
       404
     );
   return result.data;
