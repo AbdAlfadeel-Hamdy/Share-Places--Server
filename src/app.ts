@@ -1,11 +1,11 @@
 import fs from 'fs';
-import path from 'path';
 import dotenv from 'dotenv';
 import express, { NextFunction, Response, Request } from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import helmet from 'helmet';
 import mongoSanitize from 'express-mongo-sanitize';
+import { v2 as cloudinary } from 'cloudinary';
 // ROUTERS
 import placesRouter from './routes/places';
 import usersRouter from './routes/users';
@@ -26,15 +26,12 @@ app.use(
 // Security Packages
 app.use(helmet());
 app.use(mongoSanitize());
-// Static Files
-app.use(
-  '/uploads/images',
-  (req, res, next) => {
-    res.setHeader('cross-origin-resource-policy', 'cross-origin');
-    next();
-  },
-  express.static(path.join('uploads', 'images'))
-);
+// Setting Up Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.CLOUD_API_KEY,
+  api_secret: process.env.CLOUD_API_SECRET,
+});
 // ROUTERS
 app.use('/api/v1/places', placesRouter);
 app.use('/api/v1/users', usersRouter);
